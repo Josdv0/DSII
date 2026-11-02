@@ -1,0 +1,87 @@
+{
+  "name": "Consulta RAG Datos Personales",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Eres un asistente para el sistema de Gestión de Datos Personales. Responde con precisión a las consultas del usuario sobre los empleados o personas registradas."
+        }
+      },
+      "id": "e1f13b2e-0a56-4290-9516-72be1c70e001",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "rag-chat-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://consultar:8000/personas/preguntar-rag",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"pregunta\": \"{{ $json.chatInput }}\",\n  \"usuario\": \"n8n_chat\"\n}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "e1f13b2e-0a56-4290-9516-72be1c70e002",
+      "name": "Microservicio RAG + Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nreturn [{\n  json: {\n    output: r.respuesta || 'Sin respuesta',\n    pregunta: r.pregunta,\n    documento: r.documento\n  }\n}];"
+      },
+      "id": "e1f13b2e-0a56-4290-9516-72be1c70e003",
+      "name": "Formatear Respuesta Chat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Microservicio RAG + Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microservicio RAG + Log": {
+      "main": [
+        [
+          {
+            "node": "Formatear Respuesta Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f7842e48-3c3e-4cf2-8356-9d6cf12089aa",
+  "id": "rag-personas-workflow",
+  "tags": []
+}
+

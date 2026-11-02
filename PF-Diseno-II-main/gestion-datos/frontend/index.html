@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestión de Datos Personales</title>
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --fg: #1b1b1b;
+    --card: #ffffff;
+    --line: #d8d4cc;
+    --accent: #1976d2;
+    --accent-hover: #1565c0;
+    --ok: #1d7a3a;
+    --err: #c62828;
+    --avatar-bg: #2196f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --fg: #f0f0f0;
+      --card: #282828;
+      --line: #444444;
+      --accent: #2196f3;
+      --accent-hover: #42a5f5;
+      --ok: #66bb6a;
+      --err: #ef5350;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+  
+  header {
+    background: var(--card);
+    border-bottom: 2px solid var(--accent);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  h1 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: .02em; }
+  
+  .auth-bar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .85rem;
+  }
+  .badge-user {
+    background: rgba(25, 118, 210, 0.1);
+    color: var(--accent);
+    padding: .3rem .6rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: 1rem 1.5rem;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  nav button, .btn {
+    padding: .5rem .85rem;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--fg);
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: .9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    transition: all .15s ease;
+  }
+  nav button:hover, .btn:hover { background: rgba(0,0,0,0.05); }
+  nav button.on, .btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  nav button.on:hover, .btn.primary:hover { background: var(--accent-hover); }
+  
+  main { max-width: 860px; margin: 1.5rem auto 3rem; padding: 0 1rem; }
+  section { display: none; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 1.5rem; }
+  section.on { display: block; }
+  h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 1px solid var(--line); padding-bottom: .6rem; }
+  
+  /* Avatar visual idéntico al requerimiento */
+  .avatar-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    gap: .5rem;
+  }
+  .avatar-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--avatar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    border: 3px solid #fff;
+  }
+  .avatar-circle svg { width: 56px; height: 56px; fill: #ffffff; }
+  .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+  
+  form { display: grid; gap: .8rem; }
+  label { display: grid; gap: .25rem; font-size: .88rem; font-weight: 500; }
+  input, select, textarea {
+    padding: .5rem .65rem;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    background: var(--bg);
+    color: var(--fg);
+    font: inherit;
+    font-size: .92rem;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(25,118,210,0.2);
+  }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+  
+  .hint { font-size: .78rem; color: #666; font-weight: normal; }
+  .msg { margin-top: .8rem; white-space: pre-line; font-size: .9rem; padding: .6rem .8rem; border-radius: 5px; }
+  .msg.ok { background: rgba(29,122,58,0.1); color: var(--ok); border: 1px solid var(--ok); }
+  .msg.err { background: rgba(198,40,40,0.1); color: var(--err); border: 1px solid var(--err); }
+  .msg:empty { display: none; }
+  
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: .8rem; }
+  th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid var(--line); }
+  th { background: rgba(0,0,0,0.03); font-weight: 600; }
+  .tabla { overflow-x: auto; }
+  
+  .ficha { display: flex; gap: 1.2rem; align-items: flex-start; margin-top: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: 6px; }
+  .ficha .avatar-circle { width: 80px; height: 80px; flex-shrink: 0; }
+  .ficha dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem; font-size: .9rem; }
+  .ficha dt { font-weight: 600; color: #666; }
+  
+  /* RAG box */
+  .rag-panel { background: rgba(25, 118, 210, 0.05); border: 1px solid rgba(25, 118, 210, 0.2); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .chat-box { border: 1px solid var(--line); border-radius: 6px; padding: .8rem; max-height: 280px; overflow-y: auto; background: var(--bg); display: grid; gap: .5rem; margin-top: .5rem; }
+  .chat-bubble { padding: .5rem .8rem; border-radius: 6px; font-size: .9rem; max-width: 85%; }
+  .chat-bubble.user { background: var(--accent); color: #fff; justify-self: end; }
+  .chat-bubble.bot { background: var(--card); border: 1px solid var(--line); justify-self: start; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>GESTIÓN DE DATOS PERSONALES</h1>
+  </div>
+  <div class="auth-bar">
+    <span>Autenticación SSO:</span>
+    <span id="badge-usuario" class="badge-user">dev-user</span>
+    <button class="btn" onclick="configurarSSO()" style="padding:.3rem .6rem; font-size:.8rem;">Configurar SSO / Token</button>
+  </div>
+</header>
+
+<nav id="menu"></nav>
+
+<main>
+  <!-- 1. CREAR -->
+  <section id="crear">
+    <h2>Crear Personas</h2>
+    <div class="avatar-box">
+      <div class="avatar-circle" id="prev-avatar-crear">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+      <span class="hint">Foto de perfil (máx. 2 MB)</span>
+    </div>
+    <form id="f-crear"></form>
+    <div class="msg" id="m-crear"></div>
+  </section>
+
+  <!-- 2. MODIFICAR -->
+  <section id="modificar">
+    <h2>Modificar Datos Personales</h2>
+    <form id="f-buscar-mod" class="row">
+      <label>Nro. Documento a buscar
+        <input name="doc" inputmode="numeric" maxlength="10" pattern="[0-9]{1,10}" required placeholder="Ej. 1001">
+      </label>
+      <label>&nbsp;
+        <button class="btn primary" type="submit">Cargar Datos</button>
+      </label>
+    </form>
+    <div id="box-mod" hidden style="margin-top:1.5rem">
+      <div class="avatar-box">
+        <div class="avatar-circle" id="prev-avatar-mod">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <span class="hint">Foto de perfil (máx. 2 MB)</span>
+      </div>
+      <form id="f-modificar"></form>
+    </div>
+    <div class="msg" id="m-modificar"></div>
+  </section>
+
+  <!-- 3. CONSULTAR -->
+  <section id="consultar">
+    <h2>Consultar Datos Personales</h2>
+    <form id="f-consultar" class="row">
+      <label>Nro. Documento
+        <input name="doc" inputmode="numeric" maxlength="10" placeholder="Dejar vacío para listar todos">
+      </label>
+      <label>&nbsp;
+        <button class="btn primary" type="submit">Consultar</button>
+      </label>
+    </form>
+    <div class="msg" id="m-consultar"></div>
+    <div id="r-consultar"></div>
+  </section>
+
+  <!-- 4. CONSULTA EN LENGUAJE NATURAL (RAG + n8n) -->
+  <section id="lenguaje_natural">
+    <h2>Consultar Datos personales – Lenguaje Natural (en la interfaz de n8n)</h2>
+    <div class="rag-panel">
+      <strong>IMPLEMENTACIÓN DE RAG (Retrieval-Augmented Generation) con n8n</strong>
+      <p style="margin:.4rem 0 .8rem; font-size:.9rem; line-height:1.4;">
+        Este módulo responde preguntas en lenguaje natural utilizando los datos registrados en PostgreSQL y el patrón RAG.
+        Cada transacción (pregunta y respuesta) se registra de forma obligatoria en la tabla <code>logs</code>.
+      </p>
+      <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:.8rem;">
+        <a href="http://localhost:5678" target="_blank" rel="noopener" class="btn primary">
+          Abrir Interfaz de n8n (Chat Oficial) ↗
+        </a>
+      </div>
+      <p style="font-size:.85rem; margin:0; color:#555;">
+        Ejemplo sugerido: <em>"¿Cual es el empleado más joven que se ha registrado?"</em> (Respuesta: <strong>Pedro Pérez</strong>).
+      </p>
+    </div>
+
+    <!-- Chat interactivo directo para verificar de inmediato el RAG -->
+    <h3 style="font-size:1rem; margin:.5rem 0;">Chat de prueba RAG:</h3>
+    <form id="f-rag" style="display:flex; gap:.5rem;">
+      <input name="pregunta" placeholder="Escribe tu pregunta en lenguaje natural…" required style="flex:1;" value="¿Cual es el empleado más joven que se ha registrado?">
+      <button class="btn primary" type="submit">Preguntar</button>
+    </form>
+    <div class="chat-box" id="chat-rag-box">
+      <div class="chat-bubble bot">¡Hola! Puedes hacerme preguntas en lenguaje natural como <em>"¿Cual es el empleado más joven que se ha registrado?"</em></div>
+    </div>
+    <div class="msg" id="m-rag"></div>
+  </section>
+
+  <!-- 5. BORRAR -->
+  <section id="borrar">
+    <h2>Borrar Personas</h2>
+    <form id="f-borrar" class="row">
+      <label>Nro. Documento
+        <input name="doc" inputmode="numeric" maxlength="10" required placeholder="Ej. 1001">
+      </label>
+      <label>&nbsp;
+        <button class="btn primary" type="submit" style="background:#c62828; border-color:#c62828;">Borrar Persona</button>
+      </label>
+    </form>
+    <div class="msg" id="m-borrar"></div>
+  </section>
+
+  <!-- 6. CONSULTAR LOGS -->
+  <section id="logs">
+    <h2>Consultar log</h2>
+    <form id="f-logs">
+      <div class="row">
+        <label>Tipo de Transacción
+          <select name="tipo">
+            <option value="">Todos</option>
+            <option value="CREAR">CREAR</option>
+            <option value="MODIFICAR">MODIFICAR</option>
+            <option value="CONSULTAR">CONSULTAR</option>
+            <option value="BORRAR">BORRAR</option>
+            <option value="RAG">RAG (Lenguaje Natural)</option>
+          </select>
+        </label>
+        <label>Documento
+          <input name="documento" placeholder="Número de documento o *">
+        </label>
+      </div>
+      <div class="row">
+        <label>Fecha exacta
+          <input type="date" name="fecha">
+          <span class="hint">O define un rango abajo:</span>
+        </label>
+        <div class="row" style="margin:0;">
+          <label>Desde<input type="date" name="desde"></label>
+          <label>Hasta<input type="date" name="hasta"></label>
+        </div>
+      </div>
+      <button class="btn primary" type="submit">Buscar logs</button>
+    </form>
+    <div class="msg" id="m-logs"></div>
+    <div class="tabla" id="r-logs"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let tokenAuth = localStorage.getItem('sso_token') || '';
+
+function configurarSSO() {
+  const t = prompt('Ingresa tu Token JWT para autenticación SSO (o déjalo vacío para modo dev-user):', tokenAuth);
+  if (t !== null) {
+    tokenAuth = t.trim();
+    if (tokenAuth) {
+      localStorage.setItem('sso_token', tokenAuth);
+      try {
+        const payload = JSON.parse(atob(tokenAuth.split('.')[1]));
+        $('#badge-usuario').textContent = payload.preferred_username || payload.name || payload.email || 'sso-user';
+      } catch {
+        $('#badge-usuario').textContent = 'sso-user';
+      }
+    } else {
+      localStorage.removeItem('sso_token');
+      $('#badge-usuario').textContent = 'dev-user';
+    }
+  }
+}
+
+/* ---------- Menú Principal idéntico al requerimiento ---------- */
+const OPCIONES = [
+  ['crear', 'Crear Personas'],
+  ['modificar', 'Modificar Datos Personales'],
+  ['consultar', 'Consultar Datos Personales'],
+  ['lenguaje_natural', 'Consultar Datos personales – Lenguaje Natural (en la interfaz de n8n)'],
+  ['borrar', 'Borrar Personas'],
+  ['logs', 'Consultar log']
+];
+
+const menu = $('#menu');
+OPCIONES.forEach(([id, txt]) => {
+  const b = document.createElement('button');
+  b.textContent = txt;
+  b.dataset.id = id;
+  b.onclick = () => mostrar(id);
+  menu.appendChild(b);
+});
+
+function mostrar(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === id));
+  menu.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+}
+
+/* ---------- Utilidades de API ---------- */
+async function api(url, opts = {}) {
+  opts.headers = opts.headers || {};
+  if (tokenAuth) {
+    opts.headers['Authorization'] = 'Bearer ' + tokenAuth;
+  }
+  const r = await fetch(url, opts);
+  let data = null;
+  try { data = await r.json(); } catch {}
+  if (!r.ok) {
+    const d = data && data.detail;
+    throw new Error(Array.isArray(d) ? d.join('\n') : (d || r.statusText));
+  }
+  return data;
+}
+
+function msg(id, texto, ok = true) {
+  const el = $('#m-' + id);
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = texto;
+}
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Formulario con Campos y Validaciones Requeridas ---------- */
+const CAMPOS = (modo) => `
+  <div class="row">
+    <label>Tipo de documento
+      <select name="tipo_documento" required>
+        <option value="">Seleccione…</option>
+        <option value="Tarjeta de identidad">Tarjeta de identidad</option>
+        <option value="Cédula">Cédula</option>
+      </select>
+      <span class="hint">Lista con Tarjeta de identidad o Cédula</span>
+    </label>
+    <label>Nro. Documento
+      <input name="nro_documento" inputmode="numeric" maxlength="10" pattern="[0-9]{1,10}" required ${modo==='mod'?'readonly':''} placeholder="Hasta 10 dígitos numéricos">
+      <span class="hint">Numérico, no mayor de 10 caracteres</span>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>Primer Nombre
+      <input name="primer_nombre" maxlength="30" pattern="[^0-9]*" required placeholder="Máximo 30 caracteres">
+      <span class="hint">No debe ser número, máx. 30 caracteres</span>
+    </label>
+    <label>Segundo Nombre (opcional)
+      <input name="segundo_nombre" maxlength="30" pattern="[^0-9]*" placeholder="Opcional, máx. 30 caracteres">
+      <span class="hint">No debe ser número, máx. 30 caracteres</span>
+    </label>
+  </div>
+
+  <label>Apellidos
+    <input name="apellidos" maxlength="60" pattern="[^0-9]*" required placeholder="Máximo 60 caracteres">
+    <span class="hint">No debe ser número, máx. 60 caracteres</span>
+  </label>
+
+  <div class="row">
+    <label>Fecha de Nacimiento (Calendario)
+      <input type="date" name="fecha_nacimiento" id="cal-${modo}">
+      <span class="hint">Escoge de un calendario</span>
+    </label>
+    <label>…o escribir en formato dd-mmm-yyyy
+      <input name="fecha_texto" id="txt-fecha-${modo}" placeholder="Ej. 05-mar-2001">
+      <span class="hint">Formato dd-mmm-yyyy (ej. 05-mar-2001)</span>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>Género
+      <select name="genero" required>
+        <option value="">Seleccione…</option>
+        <option value="Masculino">Masculino</option>
+        <option value="Femenino">Femenino</option>
+        <option value="No binario">No binario</option>
+        <option value="Prefiero no reportar">Prefiero no reportar</option>
+      </select>
+      <span class="hint">4 opciones requeridas</span>
+    </label>
+    <label>Celular
+      <input name="celular" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="10 dígitos">
+      <span class="hint">Numérico de exactamente 10 caracteres</span>
+    </label>
+  </div>
+
+  <label>Correo electrónico
+    <input type="email" name="correo" required placeholder="ejemplo@correo.com">
+    <span class="hint">Validación de formato de correo</span>
+  </label>
+
+  <label>Foto
+    <input type="file" name="foto" id="inp-foto-${modo}" accept="image/png,image/jpeg,image/webp">
+    <span class="hint">El tamaño del archivo no debe superar 2 MB</span>
+  </label>
+
+  <button class="btn primary" type="submit" style="margin-top:.5rem;">${modo==='mod' ? 'Guardar Cambios' : 'Crear Persona'}</button>
+`;
+
+$('#f-crear').innerHTML = CAMPOS('crear');
+$('#f-modificar').innerHTML = CAMPOS('mod');
+
+// Preview de foto en avatar y sincronización de fecha
+function setupFormInteractions(modo) {
+  const fileInput = $('#inp-foto-' + modo);
+  const avatarPrev = $('#prev-avatar-' + modo);
+  const cal = $('#cal-' + modo);
+  const txt = $('#txt-fecha-' + modo);
+
+  fileInput.onchange = () => {
+    const f = fileInput.files[0];
+    if (f) {
+      if (f.size > 2 * 1024 * 1024) {
+        alert('La foto supera el límite permitido de 2 MB.');
+        fileInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => { avatarPrev.innerHTML = `<img src="${e.target.result}" alt="Foto">`; };
+      reader.readAsDataURL(f);
+    }
+  };
+
+  cal.onchange = () => {
+    if (cal.value && !txt.value) {
+      // convierte a dd-mmm-yyyy referencial
+      const [y, m, d] = cal.value.split('-');
+      const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      txt.value = `${d}-${meses[parseInt(m,10)-1]}-${y}`;
+    }
+  };
+}
+setupFormInteractions('crear');
+setupFormInteractions('modificar');
+
+function datosForm(form) {
+  const fd = new FormData(form);
+  const t = (fd.get('fecha_texto') || '').trim();
+  if (t) {
+    fd.set('fecha_nacimiento', t);
+  }
+  fd.delete('fecha_texto');
+
+  const f = fd.get('foto');
+  if (f && f.size > 2 * 1024 * 1024) {
+    throw new Error('foto: el tamaño del archivo no puede superar los 2 MB');
+  }
+  if (f && !f.size) {
+    fd.delete('foto');
+  }
+  return fd;
+}
+
+/* ---------- 1. Crear ---------- */
+$('#f-crear').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const r = await api('/api/crear/personas', { method: 'POST', body: datosForm(e.target) });
+    msg('crear', `${r.mensaje} (Documento: ${r.nro_documento})`);
+    e.target.reset();
+    $('#prev-avatar-crear').innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+  } catch (err) {
+    msg('crear', err.message, false);
+  }
+};
+
+/* ---------- 2. Modificar ---------- */
+$('#f-buscar-mod').onsubmit = async e => {
+  e.preventDefault();
+  const doc = new FormData(e.target).get('doc');
+  const box = $('#box-mod');
+  const f = $('#f-modificar');
+  try {
+    const p = await api('/api/modificar/personas/' + encodeURIComponent(doc));
+    ['tipo_documento','nro_documento','primer_nombre','segundo_nombre','apellidos','fecha_nacimiento','genero','correo','celular']
+      .forEach(k => { if (f.elements[k]) f.elements[k].value = p[k] ?? ''; });
+    if ($('#txt-fecha-mod')) $('#txt-fecha-mod').value = p.fecha_nacimiento ?? '';
+    
+    const prev = $('#prev-avatar-mod');
+    if (p.tiene_foto) {
+      prev.innerHTML = `<img src="/api/consultar/personas/${encodeURIComponent(doc)}/foto" alt="Foto">`;
+    } else {
+      prev.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+    }
+    box.hidden = false;
+    msg('modificar', 'Datos cargados exitosamente. Modifique los campos necesarios y guarde.');
+  } catch (err) {
+    box.hidden = true;
+    msg('modificar', err.message, false);
+  }
+};
+
+$('#f-modificar').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const fd = datosForm(e.target);
+    const doc = fd.get('nro_documento');
+    fd.delete('nro_documento');
+    const r = await api('/api/modificar/personas/' + encodeURIComponent(doc), { method: 'PUT', body: fd });
+    msg('modificar', r.mensaje);
+  } catch (err) {
+    msg('modificar', err.message, false);
+  }
+};
+
+/* ---------- 3. Consultar ---------- */
+const AVATAR_SVG = '<div class="avatar-circle"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>';
+
+function ficha(p) {
+  const foto = p.tiene_foto 
+    ? `<div class="avatar-circle"><img alt="Foto" src="/api/consultar/personas/${esc(p.nro_documento)}/foto"></div>`
+    : AVATAR_SVG;
+  const nom2 = p.segundo_nombre ? ` ${esc(p.segundo_nombre)}` : '';
+  return `<div class="ficha">${foto}<dl>
+    <dt>Tipo Doc.</dt><dd>${esc(p.tipo_documento)}</dd>
+    <dt>Nro. Documento</dt><dd><strong>${esc(p.nro_documento)}</strong></dd>
+    <dt>Nombre Completo</dt><dd>${esc(p.primer_nombre)}${nom2} ${esc(p.apellidos)}</dd>
+    <dt>Nacimiento</dt><dd>${esc(p.fecha_nacimiento)}</dd>
+    <dt>Género</dt><dd>${esc(p.genero)}</dd>
+    <dt>Correo</dt><dd>${esc(p.correo)}</dd>
+    <dt>Celular</dt><dd>${esc(p.celular)}</dd>
+  </dl></div>`;
+}
+
+$('#f-consultar').onsubmit = async e => {
+  e.preventDefault();
+  const doc = (new FormData(e.target).get('doc') || '').trim();
+  const out = $('#r-consultar');
+  out.innerHTML = '';
+  try {
+    if (doc) {
+      out.innerHTML = ficha(await api('/api/consultar/personas/' + encodeURIComponent(doc)));
+      msg('consultar', '');
+    } else {
+      const l = await api('/api/consultar/personas');
+      out.innerHTML = l.map(ficha).join('');
+      msg('consultar', `${l.length} registro(s) encontrado(s)`);
+    }
+  } catch (err) {
+    msg('consultar', err.message, false);
+  }
+};
+
+/* ---------- 4. RAG en Lenguaje Natural ---------- */
+$('#f-rag').onsubmit = async e => {
+  e.preventDefault();
+  const input = e.target.elements['pregunta'];
+  const pregunta = input.value.trim();
+  if (!pregunta) return;
+
+  const chatBox = $('#chat-rag-box');
+  chatBox.insertAdjacentHTML('beforeend', `<div class="chat-bubble user">${esc(pregunta)}</div>`);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  try {
+    const res = await api('/api/consultar/personas/preguntar-rag', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pregunta: pregunta, usuario: $('#badge-usuario').textContent })
+    });
+    chatBox.insertAdjacentHTML('beforeend', `<div class="chat-bubble bot"><strong>Respuesta:</strong> ${esc(res.respuesta)}</div>`);
+    msg('rag', '✓ Transacción registrada en logs exitosamente.');
+    input.value = '';
+  } catch (err) {
+    chatBox.insertAdjacentHTML('beforeend', `<div class="chat-bubble bot" style="color:var(--err)">Error: ${esc(err.message)}</div>`);
+    msg('rag', err.message, false);
+  }
+  chatBox.scrollTop = chatBox.scrollHeight;
+};
+
+/* ---------- 5. Borrar ---------- */
+$('#f-borrar').onsubmit = async e => {
+  e.preventDefault();
+  const doc = new FormData(e.target).get('doc');
+  if (!confirm(`¿Está seguro de eliminar a la persona con documento ${doc}?`)) return;
+  try {
+    const r = await api('/api/borrar/personas/' + encodeURIComponent(doc), { method: 'DELETE' });
+    msg('borrar', r.mensaje);
+    e.target.reset();
+  } catch (err) {
+    msg('borrar', err.message, false);
+  }
+};
+
+/* ---------- 6. Consultar Logs ---------- */
+$('#f-logs').onsubmit = async e => {
+  e.preventDefault();
+  const q = new URLSearchParams();
+  new FormData(e.target).forEach((v, k) => v && q.set(k, v));
+  try {
+    const l = await api('/api/logs/logs?' + q);
+    msg('logs', `${l.length} registro(s) en log`);
+    $('#r-logs').innerHTML = `
+      <table>
+        <tr>
+          <th>Fecha y Hora</th>
+          <th>Tipo</th>
+          <th>Documento</th>
+          <th>Usuario</th>
+          <th>Detalle de Transacción</th>
+        </tr>
+        ${l.map(x => `
+          <tr>
+            <td>${esc(new Date(x.fecha).toLocaleString())}</td>
+            <td><strong>${esc(x.tipo_transaccion)}</strong></td>
+            <td>${esc(x.documento)}</td>
+            <td>${esc(x.usuario)}</td>
+            <td>${esc(x.detalle)}</td>
+          </tr>
+        `).join('')}
+      </table>`;
+  } catch (err) {
+    msg('logs', err.message, false);
+  }
+};
+
+mostrar('crear');
+</script>
+</body>
+</html>
